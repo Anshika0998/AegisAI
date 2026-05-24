@@ -16,14 +16,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
 from app.core.database import engine
 from app.api.v1 import api_router, badge  # ensure all ORM models are imported so tables are created
+from app.core.database import engine, Base
+from app.core.logging import configure_logging
+from app.core.middleware import RequestContextMiddleware
+import app.models  # ensure all ORM models are imported so tables are created
+
 
 # -------------------------------------------------------------------
 # Logging Setup
 # -------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-)
+# Structured single-line JSON logs to stdout (parseable by Datadog / Loki /
+# CloudWatch). Honour DEBUG from settings; everything else stays at INFO.
+configure_logging(level="DEBUG" if settings.DEBUG else "INFO")
 logger = logging.getLogger("aegisai.main")
 
 # -------------------------------------------------------------------
@@ -82,6 +86,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Added last => outermost: every request (incl. CORS preflight and error
+# responses) is assigned a request id and access-logged in JSON.
+app.add_middleware(RequestContextMiddleware)
 
 # -------------------------------------------------------------------
 # Routing
