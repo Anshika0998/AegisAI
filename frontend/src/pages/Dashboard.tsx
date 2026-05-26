@@ -5,18 +5,35 @@ import { Bot, FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
 import BackendStatus from '../components/BackendStatus'
 
 export default function Dashboard() {
-  const { data: systemsData, isLoading: systemsLoading } = useQuery({
+  const {
+    data: systemsData,
+    isLoading: systemsLoading,
+    isError: systemsError,
+    error: systemsErrorDetail,
+    refetch: refetchSystems,
+  } = useQuery({
     queryKey: ['ai-systems'],
     queryFn: () => aiSystemsApi.list(),
   })
   const systems = Array.isArray(systemsData) ? systemsData : (systemsData?.items ?? [])
 
-  const { data: documentsData, isLoading: documentsLoading } = useQuery({
+  const {
+    data: documentsData,
+    isLoading: documentsLoading,
+    isError: documentsError,
+    error: documentsErrorDetail,
+    refetch: refetchDocuments,
+  } = useQuery({
     queryKey: ['documents'],
     queryFn: documentsApi.list,
   })
   const documents = Array.isArray(documentsData) ? documentsData : (documentsData?.items ?? [])
   const isLoading = systemsLoading || documentsLoading
+  const hasError = systemsError || documentsError
+  const errorMessage =
+    (systemsErrorDetail instanceof Error && systemsErrorDetail.message) ||
+    (documentsErrorDetail instanceof Error && documentsErrorDetail.message) ||
+    'Unable to load dashboard data.'
 
   const stats = [
     {
@@ -73,6 +90,21 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+      ) : hasError ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-300" />
+          <h2 className="text-lg font-semibold text-gray-900">Unable to load dashboard</h2>
+          <p className="text-gray-500 mt-1">{errorMessage}</p>
+          <button
+            onClick={() => {
+              refetchSystems()
+              refetchDocuments()
+            }}
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -185,5 +217,4 @@ export default function Dashboard() {
     </div>
   )
 }
-
 

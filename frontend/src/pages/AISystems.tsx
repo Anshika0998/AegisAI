@@ -35,7 +35,13 @@ export default function AISystems() {
 
   const limit = 10
 
-  const { data: systemsData, isLoading } = useQuery({
+  const {
+    data: systemsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['ai-systems', sortBy, order, currentPage],
     queryFn: () =>
       aiSystemsApi.list({
@@ -253,6 +259,20 @@ export default function AISystems() {
               </div>
             </div>
           ))}
+        </div>
+      ) : isError ? (
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+          <Bot className="w-16 h-16 mx-auto mb-4 text-red-300" />
+          <h3 className="text-lg font-medium text-gray-900">Unable to load AI systems</h3>
+          <p className="text-gray-500 mt-1">
+            {error instanceof Error ? error.message : 'Please try again.'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Retry
+          </button>
         </div>
       ) : filteredSystems.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
