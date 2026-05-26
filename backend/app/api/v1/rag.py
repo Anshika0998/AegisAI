@@ -12,6 +12,7 @@ TODO for contributors (high difficulty):
 import os
 import shutil
 import tempfile
+import time
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -166,7 +167,6 @@ def query_knowledge_base(
     """
     try:
         from app.modules.rag.retrieval_chain import get_qa_chain
-        from app.modules.rag.groundedness import compute_groundedness
         from app.core.database import Base
 
         qa_chain = get_qa_chain()
@@ -191,6 +191,8 @@ def query_knowledge_base(
             for doc in source_docs
         ]
         try:
+            from app.modules.rag.groundedness import compute_groundedness
+
             groundedness_score = compute_groundedness(answer, chunk_texts)
         except Exception:
             groundedness_score = 1.0 if answer and chunk_texts else 0.0
