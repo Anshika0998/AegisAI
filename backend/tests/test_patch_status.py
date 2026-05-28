@@ -73,7 +73,7 @@ class TestPatchStatus:
         )
         assert resp.status_code == 200
         assert resp.json()["compliance_status"] == "compliant"
-        
+
     def test_patch_status_reflected_in_get(self, client):
         c, system = client
 
@@ -120,3 +120,53 @@ class TestPatchStatus:
             json={"compliance_status": "banana"},
         )
         assert resp.status_code == 422
+
+    def test_patch_other_users_system_returns_404(self, db):
+        # Create owner user
+        owner = User(
+            email="owner@test.com",
+            hashed_password="x",
+            full_name="Owner",
+        )
+
+        db.add(owner)
+        db.flush()
+
+        # Create another user
+        other_user = User(
+            email="other@test.com",
+            hashed_password="x",
+            full_name="Other User",
+        )
+
+        db.add(other_user)
+        db.flush()
+
+        # Create system owned by owner
+        system = AISystem(
+            owner_id=owner.id,
+            name="Owner System",
+            compliance_status=ComplianceStatus.NOT_STARTED,
+        )
+
+        db.add(system)
+        db.flush()
+
+        def override_db():
+            yield db
+
+        def override_user():
+            return other_user
+
+        app.dependency_overrides[get_db] = override_db
+        app.dependency_overrides[get_current_user] = override_user
+
+        with TestClient(app) as c:
+            resp = c.patch(
+                f"/api/v1/ai-systems/{system.id}/status",
+                json={"compliance_status": "compliant"},
+            )
+
+            assert resp.status_code == 404
+
+        app.dependency_overrides.clear()
