@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -54,9 +54,6 @@ class Settings(BaseSettings):
     RAG_MAX_FILES_PER_REQUEST: int = 10
     RAG_MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024
     RAG_TOTAL_BUDGET_BYTES: int = 50 * 1024 * 1024
-
-    # MLflow
-    MLFLOW_TRACKING_URI: Optional[str] = None  # ← only line added
 
     class Config:
         env_file = ".env"
